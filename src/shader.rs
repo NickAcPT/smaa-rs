@@ -6,6 +6,7 @@ pub enum ShaderQuality {
     Medium,
     High,
     Ultra,
+    Nmsr,
 }
 impl ShaderQuality {
     fn as_str(&self) -> &'static str {
@@ -14,6 +15,7 @@ impl ShaderQuality {
             ShaderQuality::Medium => "MEDIUM",
             ShaderQuality::High => "HIGH",
             ShaderQuality::Ultra => "ULTRA",
+            ShaderQuality::Nmsr => "NMSR",
         }
     }
 }
