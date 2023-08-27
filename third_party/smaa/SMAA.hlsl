@@ -321,6 +321,11 @@
 #define SMAA_MAX_SEARCH_STEPS 32
 #define SMAA_MAX_SEARCH_STEPS_DIAG 16
 #define SMAA_CORNER_ROUNDING 25
+#elif defined(SMAA_PRESET_NMSR)
+#define SMAA_THRESHOLD 0.01
+#define SMAA_MAX_SEARCH_STEPS 32
+#define SMAA_MAX_SEARCH_STEPS_DIAG 16
+#define SMAA_CORNER_ROUNDING 25
 #endif
 
 //-----------------------------------------------------------------------------

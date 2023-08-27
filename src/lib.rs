@@ -262,7 +262,7 @@ impl Pipelines {
         layouts: &BindGroupLayouts,
     ) -> Self {
         let source = ShaderSource {
-            quality: ShaderQuality::High,
+            quality: ShaderQuality::Nmsr,
         };
 
         let edge_detect_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
