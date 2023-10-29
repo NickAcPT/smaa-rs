@@ -10,9 +10,9 @@ license = "MIT"
 edition = "2021"
 
 [dependencies]
-naga = "0.13"
-wgpu = { version = "0.17", features = ["glsl"] }
+naga = "^0.14"
+wgpu = { version = "0.18", features = ["glsl"] }
 
 [dev-dependencies]
-winit = "0.28.1"
+winit = {version = "0.29.3", features = ["rwh_05"]}
 futures = "0.3.26"

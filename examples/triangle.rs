@@ -9,7 +9,7 @@ use winit::{
 
 fn main() {
     // Initialize wgpu
-    let event_loop: EventLoop<()> = EventLoop::new();
+    let event_loop: EventLoop<()> = EventLoop::new().unwrap();
     let window = winit::window::Window::new(&event_loop).unwrap();
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::default());
     let surface = unsafe { instance.create_surface(&window).unwrap() };
@@ -73,7 +73,8 @@ fn main() {
     });
 
     // Main loop
-    event_loop.run(move |event, _, control_flow| {
+    event_loop.run(move |event, target| {
+        let ref mut control_flow = target.control_flow();
         *control_flow = ControlFlow::Wait;
         match event {
             Event::WindowEvent {
@@ -86,7 +87,7 @@ fn main() {
                 surface.configure(&device, &config);
                 smaa_target.resize(&device, size.width, size.height);
             }
-            Event::RedrawRequested(_) => {
+            Event::WindowEvent { event: WindowEvent::RedrawRequested, .. } => {
                 let output_frame = surface.get_current_texture().unwrap();
                 let output_view = output_frame.texture.create_view(&Default::default());
                 let smaa_frame = smaa_target.start_frame(&device, &queue, &output_view);
@@ -101,10 +102,12 @@ fn main() {
                             resolve_target: None,
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                                store: true,
+                                store: wgpu::StoreOp::Store,
                             },
                         })],
                         depth_stencil_attachment: None,
+                        timestamp_writes: None,
+                        occlusion_query_set: None,
                     });
                     rpass.set_pipeline(&render_pipeline);
                     rpass.draw(0..3, 0..1);
@@ -117,8 +120,8 @@ fn main() {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 ..
-            } => *control_flow = ControlFlow::Exit,
+            } => target.exit(),
             _ => {}
         }
-    });
+    }).unwrap();
 }
