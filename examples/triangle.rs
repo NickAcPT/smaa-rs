@@ -16,7 +16,7 @@ fn main() {
     let adapter =
         futures::executor::block_on(instance.request_adapter(&Default::default())).unwrap();
     let (device, queue) =
-        futures::executor::block_on(adapter.request_device(&Default::default(), None)).unwrap();
+        futures::executor::block_on(adapter.request_device(&Default::default())).unwrap();
     let swapchain_format = surface.get_capabilities(&adapter).formats[0];
     let mut config = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -104,6 +104,7 @@ fn main() {
                                     load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
                                     store: wgpu::StoreOp::Store,
                                 },
+                                depth_slice: None,
                             })],
                             depth_stencil_attachment: None,
                             occlusion_query_set: None,

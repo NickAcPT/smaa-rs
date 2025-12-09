@@ -19,7 +19,7 @@
 //! let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::default());
 //! let surface = instance.create_surface(window_arc.clone()).unwrap();
 //! let adapter = instance.request_adapter(&Default::default()).await.unwrap();
-//! let (device, queue) = adapter.request_device(&Default::default(), None).await?;
+//! let (device, queue) = adapter.request_device(&Default::default()).await?;
 //! let swapchain_format = surface.get_capabilities(&adapter).formats[0];
 //! let mut config = wgpu::SurfaceConfiguration {
 //!     usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -747,6 +747,7 @@ impl<'a> Drop for SmaaFrame<'a> {
                             load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                             store: wgpu::StoreOp::Store,
                         },
+                        depth_slice: None,
                     })],
                     depth_stencil_attachment: None,
                     label: Some("smaa.render_pass.edge_detect"),
@@ -766,6 +767,7 @@ impl<'a> Drop for SmaaFrame<'a> {
                             load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                             store: wgpu::StoreOp::Store,
                         },
+                        depth_slice: None,
                     })],
                     depth_stencil_attachment: None,
                     label: Some("smaa.render_pass.blend_weight"),
@@ -785,6 +787,7 @@ impl<'a> Drop for SmaaFrame<'a> {
                             load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                             store: wgpu::StoreOp::Store,
                         },
+                        depth_slice: None,
                     })],
                     depth_stencil_attachment: None,
                     label: Some("smaa.render_pass.neighborhood_blending"),
