@@ -29,6 +29,7 @@ fn main() {
         alpha_mode: wgpu::CompositeAlphaMode::Opaque,
         view_formats: vec![],
         desired_maximum_frame_latency: 2,
+        color_space: wgpu::SurfaceColorSpace::Auto
     };
     surface.configure(&device, &config);
 
@@ -124,7 +125,7 @@ fn main() {
                     queue.submit(Some(encoder.finish()));
 
                     smaa_frame.resolve();
-                    output_frame.present();
+                    queue.present(output_frame);
                 }
                 WindowEvent::CloseRequested => event_loop.exit(),
                 _ => (),
