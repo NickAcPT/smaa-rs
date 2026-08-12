@@ -1,7 +1,7 @@
 use smaa::*;
 use std::borrow::Cow;
 use std::sync::Arc;
-use wgpu::{ColorTargetState, ColorWrites};
+use wgpu::{ColorTargetState, ColorWrites, CurrentSurfaceTexture};
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::EventLoop;
 
@@ -11,7 +11,9 @@ fn main() {
     let window = winit::window::Window::new(&event_loop).unwrap();
     let window_size = window.inner_size();
     let window_arc = Arc::new(window);
-    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::default());
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_with_display_handle(
+        Box::new(window_arc.clone()),
+    ));
     let surface = instance.create_surface(window_arc.clone()).unwrap();
     let adapter =
         futures::executor::block_on(instance.request_adapter(&Default::default())).unwrap();
@@ -48,7 +50,7 @@ fn main() {
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
         bind_group_layouts: &[],
-        push_constant_ranges: &[],
+        immediate_size: 0,
     });
     let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: None,
@@ -72,8 +74,8 @@ fn main() {
         primitive: wgpu::PrimitiveState::default(),
         depth_stencil: None,
         multisample: wgpu::MultisampleState::default(),
-        multiview: None,
-        cache: None
+        multiview_mask: None,
+        cache: None,
     });
 
     // Main loop
@@ -88,7 +90,12 @@ fn main() {
                     smaa_target.resize(&device, size.width, size.height);
                 }
                 WindowEvent::RedrawRequested => {
-                    let output_frame = surface.get_current_texture().unwrap();
+                    let output_frame = match surface.get_current_texture() {
+                        CurrentSurfaceTexture::Success(tex)
+                        | CurrentSurfaceTexture::Suboptimal(tex) => tex,
+                        CurrentSurfaceTexture::Occluded => return,
+                        x => panic!("surface acquire texture error: {x:?}"),
+                    };
                     let output_view = output_frame.texture.create_view(&Default::default());
                     let smaa_frame = smaa_target.start_frame(&device, &queue, &output_view);
 
@@ -109,6 +116,7 @@ fn main() {
                             depth_stencil_attachment: None,
                             occlusion_query_set: None,
                             timestamp_writes: None,
+                            multiview_mask: None,
                         });
                         rpass.set_pipeline(&render_pipeline);
                         rpass.draw(0..3, 0..1);

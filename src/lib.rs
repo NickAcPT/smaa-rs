@@ -16,7 +16,9 @@
 //! let window = winit::window::Window::new(&event_loop).unwrap();
 //! let window_size = window.inner_size();
 //! let window_arc = Arc::new(window);
-//! let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::default());
+//! let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_with_display_handle(
+//!     Box::new(window_arc.clone()),
+//! ));
 //! let surface = instance.create_surface(window_arc.clone()).unwrap();
 //! let adapter = instance.request_adapter(&Default::default()).await.unwrap();
 //! let (device, queue) = adapter.request_device(&Default::default()).await?;
@@ -49,7 +51,9 @@
 //!     if let Event::WindowEvent { event, .. } = event {
 //!         match event {
 //!             WindowEvent::RedrawRequested => {
-//!                 let output_frame = surface.get_current_texture().unwrap();
+//!                 let wgpu::CurrentSurfaceTexture::Success(output_frame) = surface.get_current_texture() else {
+//!                     todo!();
+//!                 };
 //!                 let output_view = output_frame.texture.create_view(&Default::default());
 //!                 let smaa_frame = smaa_target.start_frame(&device, &queue, &output_view);
 //!
@@ -267,8 +271,8 @@ impl Pipelines {
 
         let edge_detect_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("smaa.pipeline_layout.edge_detect"),
-            bind_group_layouts: &[&layouts.edge_detect_bind_group_layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&layouts.edge_detect_bind_group_layout)],
+            immediate_size: 0,
         });
         let edge_detect_shader_vert = wgpu::VertexState {
             module: &source.get_shader(
@@ -305,14 +309,14 @@ impl Pipelines {
             primitive: Default::default(),
             multisample: Default::default(),
             depth_stencil: None,
-            multiview: None,
-            cache: None
+            multiview_mask: None,
+            cache: None,
         });
 
         let blend_weight_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("smaa.pipeline_layout.blend_weight"),
-            bind_group_layouts: &[&layouts.blend_weight_bind_group_layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&layouts.blend_weight_bind_group_layout)],
+            immediate_size: 0,
         });
         let blend_weight_shader_vert = wgpu::VertexState {
             module: &source.get_shader(
@@ -349,15 +353,15 @@ impl Pipelines {
             primitive: Default::default(),
             multisample: Default::default(),
             depth_stencil: None,
-            multiview: None,
-            cache: None
+            multiview_mask: None,
+            cache: None,
         });
 
         let neighborhood_blending_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("smaa.pipeline_layout.neighborhood_blending"),
-                bind_group_layouts: &[&layouts.neighborhood_blending_bind_group_layout],
-                push_constant_ranges: &[],
+                bind_group_layouts: &[Some(&layouts.neighborhood_blending_bind_group_layout)],
+                immediate_size: 0,
             });
         let neighborhood_blending_vert = wgpu::VertexState {
             module: &source.get_shader(
@@ -395,8 +399,8 @@ impl Pipelines {
                 primitive: Default::default(),
                 multisample: Default::default(),
                 depth_stencil: None,
-                multiview: None,
-                cache: None
+                multiview_mask: None,
+                cache: None,
             });
 
         Self {
@@ -525,7 +529,7 @@ impl Resources {
             label: Some("smaa.sampler"),
             mag_filter: wgpu::FilterMode::Linear,
             min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::MipmapFilterMode::Nearest,
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
             ..Default::default()
@@ -753,6 +757,7 @@ impl<'a> Drop for SmaaFrame<'a> {
                     label: Some("smaa.render_pass.edge_detect"),
                     occlusion_query_set: None,
                     timestamp_writes: None,
+                    multiview_mask: None,
                 });
                 rpass.set_pipeline(&inner.pipelines.edge_detect);
                 rpass.set_bind_group(0, &inner.bind_groups.edge_detect_bind_group, &[]);
@@ -773,6 +778,7 @@ impl<'a> Drop for SmaaFrame<'a> {
                     label: Some("smaa.render_pass.blend_weight"),
                     occlusion_query_set: None,
                     timestamp_writes: None,
+                    multiview_mask: None,
                 });
                 rpass.set_pipeline(&inner.pipelines.blend_weight);
                 rpass.set_bind_group(0, &inner.bind_groups.blend_weight_bind_group, &[]);
@@ -793,6 +799,7 @@ impl<'a> Drop for SmaaFrame<'a> {
                     label: Some("smaa.render_pass.neighborhood_blending"),
                     occlusion_query_set: None,
                     timestamp_writes: None,
+                    multiview_mask: None,
                 });
                 rpass.set_pipeline(&inner.pipelines.neighborhood_blending);
                 rpass.set_bind_group(0, &inner.bind_groups.neighborhood_blending_bind_group, &[]);
